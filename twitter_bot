@@ -1,0 +1,60 @@
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+import time
+
+class TwitterBot:
+
+    def __init__(self, username, password):
+        self.username = username
+        self.password = password
+        self.bot = webdriver.Chrome()
+        self.tweet_list = []
+
+    def login(self):
+        bot = self.bot
+        bot.get ('https://twitter.com/login')
+        time.sleep(3)
+        user_email = bot.find_element_by_name('session[username_or_email]')
+        user_password = bot.find_element_by_name('session[password]')
+        user_email.clear()
+        user_password.clear()
+        user_email.send_keys(self.username)
+        user_password.send_keys(self.password)
+        login_click = bot.find_element_by_class_name('r-urgr8i').click()
+        time.sleep(2)
+
+    def find_tweet(self, hashtag):
+        bot = self.bot
+        bot.get('https://twitter.com/search?q=' + hashtag + '&src=typed_query')
+        time.sleep(3)
+        for i in range(1,2):
+            bot.execute_script('window.scrollTo(0,document.body.scrollHeight)')
+            time.sleep(4)
+        tweets = bot.find_elements_by_xpath("//a[contains(@href,'status')]")
+        self.tweet_list = [elem.get_attribute('href') for elem in tweets]
+
+    def like_tweet(self):
+        count = 0
+        bot = self.bot
+        for url in self.tweet_list:
+            if 'photo' not in url:
+                bot.get(url)
+                time.sleep(3)
+                try:
+                    like = bot.find_element_by_xpath("//div[(@aria-label='Like')]")
+                    bot.execute_script("arguments[0].scrollIntoView(true);", like);   
+                    time.sleep(3)             
+                    like.click()
+                    count += 1
+                    time.sleep(5)
+                except:
+                    print('FAIL')
+                    pass
+        print(count)
+
+
+twitter_bot = TwitterBot('USERNAME', 'PASSWORD')
+twitter_bot.login()
+twitter_bot.find_tweet('SEARCHITEM')
+twitter_bot.like_tweet()
+
